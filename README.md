@@ -1,31 +1,100 @@
-# JSON Dosyasına erişim ve Verileri Yazdırma
+# Dataset Generation & JSON Alma Araçları
 
-# Kendi json verilerinizi github üzerinden kaydedip bu kodlarla çekebilirsiniz.
+Bu depo iki temel amaca hizmet eden küçük komut satırı araçları içerir:
 
-Bu basit Python scripti, belirli bir GitHub Raw URL'sinden JSON verisi alır ve dosyanın adını yazdırır.
+1. **Sentetik müşteri verisi oluşturma** (`Fake_Customer_Dataset.py`).
+2. **JSON verisini uzak bir URL'den veya yerel bir dosyadan alma** (`json_data_extraction.py` ve `json_data_extraction.js`).
 
-## Kullanım
+Aşağıdaki bölümlerde her aracın kurulumu ve kullanımı anlatılmaktadır.
 
-1. İlk olarak, [Python](https://www.python.org/downloads/) yükleyin, eğer yüklü değilse.
-2. Terminal veya komut istemcisine aşağıdaki komutu yazarak gerekli bağımlılıkları yükleyin:
+## 1. Sentetik müşteri verisi oluşturma
 
-    ```bash
-    pip install requests
-    ```
-   
-3. Kodu bir metin düzenleyicide açın ve `<YOUR_GITHUB_RAW_URL>` kısmını kendi GitHub Raw URL'nizle değiştirin.
-4. Terminal veya komut istemcisine aşağıdaki komutu yazarak Python scriptini çalıştırın:
+Python betiği, Faker kütüphanesi ile gerçekçi görünümlü müşteri verileri üretir.
 
-    ```bash
-    python json_data_extraction.py
-    ```
+### Kurulum
 
-## Örnek Çıktı
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows için .venv\\Scripts\\activate
+pip install faker pandas numpy scikit-learn
+```
 
-```plaintext
-Dosya Adı: db.json
+### Kullanım
 
-Alınan Veri:
+```bash
+python Fake_Customer_Dataset.py --records 500 --seed 42 --report --output data/customers.csv
+```
+
+Anahtar seçenekler:
+
+- `--records`: Üretilecek kayıt sayısı (varsayılan 1000).
+- `--seed`: Rastgele sayı üreticilerini sabitleyerek deterministik sonuçlar sağlar.
+- `--locale`: Faker'ın kullanacağı yerel ayar (varsayılan `en_US`).
+- `--no-normalize`: Gelir ve harcama sütunlarında yapılan min-maks normalizasyonu devre dışı bırakır.
+- `--report`: Basit bir istatistiksel özet ve kategorik değer dağılımı üretir.
+- `--output`: Veriyi CSV formatında kaydetmek için dosya yolu.
+
+Betiği modül olarak içe aktararak da kullanabilirsiniz:
+
+```python
+from Fake_Customer_Dataset import generate_customer_data
+
+df = generate_customer_data(num_records=250, seed=1337)
+```
+
+## 2. JSON verisi alma
+
+### Python sürümü (`json_data_extraction.py`)
+
+Betiği çalıştırmak için `requests` kütüphanesine ihtiyacınız vardır:
+
+```bash
+pip install requests
+```
+
+Komutu çalıştırın:
+
+```bash
+python json_data_extraction.py https://raw.githubusercontent.com/emredeveloper/Database/main/db.json --pretty --output data/db.json
+```
+
+Parametreler:
+
+- `source`: URL veya yerel dosya yolu (boş bırakılırsa varsayılan GitHub örneği kullanılır).
+- `--timeout`: HTTP istekleri için zaman aşımı süresi (saniye cinsinden, varsayılan 10).
+- `--pretty`: JSON çıktısını girintili biçimde yazdırır ve kaydeder.
+- `--output`: Sonucu JSON dosyasına kaydeder.
+
+Yerel dosyayı okumak için:
+
+```bash
+python json_data_extraction.py db.json --pretty
+```
+
+### Node.js sürümü (`json_data_extraction.js`)
+
+Betiği Node 18+ sürümü ile doğrudan çalıştırabilirsiniz. Daha eski sürümler için `node-fetch` paketini yüklemek gerekir.
+
+```bash
+# Node 18+ ile
+node json_data_extraction.js https://raw.githubusercontent.com/emredeveloper/Database/main/db.json
+
+# Node 16 gibi eski sürümlerde
+npm install node-fetch
+node json_data_extraction.js
+```
+
+Komutu bir dosya yolu ile çağırarak yerel JSON dosyalarını da okuyabilirsiniz:
+
+```bash
+node json_data_extraction.js db.json
+```
+
+### Örnek Çıktı
+
+Her iki sürüm de varsayılan olarak `db.json` içeriğini şu şekilde yazdırır:
+
+```json
 {
   "cities": [
     {
@@ -35,7 +104,11 @@ Alınan Veri:
       "temperature": 25,
       "weather": "Partly Cloudy",
       "humidity": 60
-    },
-    // Diğer şehirler
+    }
   ]
 }
+```
+
+## Projeye katkı
+
+Katkı sağlamak için önce mevcut kodu gözden geçirip ihtiyaç duyduğunuz bağımlılıkları kurduğunuzdan emin olun. İyileştirme önerileriniz veya hata bildirimleriniz için pull request açabilirsiniz.
